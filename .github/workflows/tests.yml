@@ -1,0 +1,57 @@
+name: Pathwise CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      falkordb:
+        image: falkordb/falkordb:latest
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: python -m pytest tests/unit/ -v --tb=short
+
+      - name: Wait for FalkorDB
+        run: |
+          for i in $(seq 1 10); do
+            redis-cli -h localhost -p 6379 ping && break
+            sleep 2
+          done
+
+      - name: Run integration tests
+        run: python -m pytest tests/integration/ -v --tb=short -m integration
+        env:
+          FALKORDB_HOST: localhost
+          FALKORDB_PORT: 6379
+          ALLOWED_ROOT: "."
+
+      - name: Run API tests
+        run: python -m pytest tests/integration/test_api.py -v --tb=short
+        env:
+          FALKORDB_HOST: localhost
+          FALKORDB_PORT: 6379
+          ALLOWED_ROOT: "."
