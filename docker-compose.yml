@@ -1,5 +1,3 @@
-
-
 services:
   falkordb:
     image: falkordb/falkordb:latest
@@ -12,6 +10,21 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    restart: unless-stopped
+
+  # Optional: run the full app stack with `docker compose --profile app up`
+  pathwise:
+    build: .
+    profiles: ["app"]
+    ports:
+      - "8000:8000"
+    depends_on:
+      falkordb:
+        condition: service_healthy
+    environment:
+      - FALKORDB_HOST=falkordb
+      - FALKORDB_PORT=6379
+      - ALLOWED_ROOT=/app
     restart: unless-stopped
 
 volumes:
