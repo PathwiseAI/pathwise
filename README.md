@@ -331,17 +331,9 @@ python -m pytest -v
 6. **Single-user** — No authentication or multi-tenant isolation
 7. **Not production-hardened** — Intended for development/demo use, not internet-facing deployment
 
-## Team
-
-| Name | Role |
-|---|---|
-| Team Lead | Architecture, implementation, testing |
-
 ## Demo
 
-> 📹 **Demo video:** _[To be recorded]_
->
-> 🌐 **Live deployment:** _[To be deployed]_
+> 📹 **Demo video:** [Watch 3-minute Demo](https://youtu.be/uydXysupKpo)
 
 The demo script (`scripts/demo.py`) demonstrates the complete workflow:
 1. Connect to FalkorDB
