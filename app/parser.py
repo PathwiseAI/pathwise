@@ -53,6 +53,7 @@ class UnresolvedCallRecord:
     caller_id: str
     call_text: str
     call_line: int
+    file_path: str = ""
 
 
 @dataclass
@@ -265,6 +266,7 @@ def _resolve_calls(
                     caller_id=caller_id,
                     call_text=call_text,
                     call_line=call_line,
+                    file_path=rel_path,
                 ))
 
     return resolved, unresolved

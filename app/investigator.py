@@ -302,8 +302,11 @@ def _investigate_impact(
     claims: list[Claim] = []
     evidence_paths: list[EvidencePath] = []
 
-    # Collect unique impacted functions
+    # Collect unique impacted functions and unique edges
     impacted: dict[str, dict] = {}
+    # Track unique edges (caller_id, callee_id) to avoid duplicate claims
+    seen_edges: set[tuple[str, str]] = set()
+
     for path in paths:
         for node in path:
             if node["function_id"] != fid:
@@ -318,18 +321,24 @@ def _investigate_impact(
         )
         evidence_paths.append(ep)
 
-    for imp_id, imp in impacted.items():
-        claim = Claim(
-            claim_id=make_claim_id(),
-            subject=imp_id,
-            predicate="CALLS",
-            target=fid,
-            repository_id=repo_id,
-            category=ClaimCategory.INFERRED_IMPACT,
-            source_location=_format_location(imp),
-            target_location=_format_location(resolved),
-        )
-        claims.append(claim)
+        # Emit one claim per edge in this path
+        for i in range(len(path) - 1):
+            caller_node = path[i]
+            callee_node = path[i + 1]
+            edge_key = (caller_node["function_id"], callee_node["function_id"])
+            if edge_key not in seen_edges:
+                seen_edges.add(edge_key)
+                claim = Claim(
+                    claim_id=make_claim_id(),
+                    subject=caller_node["function_id"],
+                    predicate="CALLS",
+                    target=callee_node["function_id"],
+                    repository_id=repo_id,
+                    category=ClaimCategory.GRAPH_FACT,
+                    source_location=_format_location(caller_node),
+                    target_location=_format_location(callee_node),
+                )
+                claims.append(claim)
 
     proof_records = verify_claims(claims, graph_store)
 

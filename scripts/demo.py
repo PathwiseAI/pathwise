@@ -1,4 +1,4 @@
-﻿"""Pathwise CLI demo script.
+"""Pathwise CLI demo script.
 
 Usage:
     python scripts/demo.py                    # Full demo with FalkorDB
@@ -15,6 +15,13 @@ import json
 import sys
 import os
 
+# Fix encoding for Windows consoles that default to cp1252
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, OSError):
+        pass
+
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -29,7 +36,7 @@ def run_direct_demo():
     from app.schemas import Claim, ClaimCategory
 
     print("=" * 70)
-    print("  PATHWISE â€” Intelligent Code Investigation Demo")
+    print("  PATHWISE \u2014 Intelligent Code Investigation Demo")
     print("=" * 70)
 
     # Step 1: Connect to FalkorDB
@@ -39,23 +46,32 @@ def run_direct_demo():
         print("ERROR: Cannot connect to FalkorDB. Is it running on localhost:6379?")
         print("Start it with: docker-compose up -d")
         sys.exit(1)
-    print("    âœ“ Connected to FalkorDB")
+    print("    \u2713 Connected to FalkorDB")
 
     # Step 2: Parse the sample repository
     sample_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "sample_repo")
     print(f"\n[2] Parsing sample repository: {sample_path}")
     parse_result = parse_repository(sample_path)
-    print(f"    âœ“ Found {len(parse_result.files)} files")
-    print(f"    âœ“ Found {len(parse_result.functions)} functions")
-    print(f"    âœ“ Resolved {len(parse_result.calls)} call relationships")
-    print(f"    âœ“ {len(parse_result.unresolved_calls)} unresolved calls")
+    print(f"    \u2713 Found {len(parse_result.files)} files")
+    print(f"    \u2713 Found {len(parse_result.functions)} functions")
+    print(f"    \u2713 Resolved {len(parse_result.calls)} call relationships")
+    print(f"    \u2713 {len(parse_result.unresolved_calls)} unresolved calls")
+    if parse_result.unresolved_calls:
+        shown = parse_result.unresolved_calls[:10]
+        for uc in shown:
+            fpath = uc.file_path or "?"
+            print(f"    ! unresolved: {fpath}:{uc.call_line}  {uc.call_text}(...)  \u2192 unknown target")
+        if len(parse_result.unresolved_calls) > 10:
+            print(f"    ! ... and {len(parse_result.unresolved_calls) - 10} more")
+        print("    Unresolved calls are recorded but never guessed \u2014"
+              " they are not represented as graph edges.")
 
     # Step 3: Ingest into FalkorDB
     print(f"\n[3] Ingesting into FalkorDB (graph: pathwise_{parse_result.repository_id})...")
     counts = gs.ingest(parse_result)
-    print(f"    âœ“ Created {counts['files']} file nodes")
-    print(f"    âœ“ Created {counts['functions']} function nodes")
-    print(f"    âœ“ Created {counts['calls']} CALLS relationships")
+    print(f"    \u2713 Created {counts['files']} file nodes")
+    print(f"    \u2713 Created {counts['functions']} function nodes")
+    print(f"    \u2713 Created {counts['calls']} CALLS relationships")
 
     repo_id = parse_result.repository_id
 
@@ -64,9 +80,9 @@ def run_direct_demo():
     functions = gs.list_functions(repo_id)
     for f in functions:
         loc = f"{f['file_path']}:{f['start_line']}-{f['end_line']}"
-        print(f"    â€¢ {f['qualified_name']:30s}  {loc}")
+        print(f"    \u2022 {f['qualified_name']:30s}  {loc}")
 
-    # Step 5: Investigation â€” Who calls compute_total?
+    # Step 5: Investigation \u2014 Who calls compute_total?
     print("\n" + "=" * 70)
     print("  INVESTIGATION: Who calls compute_total?")
     print("=" * 70)
@@ -76,13 +92,13 @@ def run_direct_demo():
     if result.claims:
         print(f"\n  Claims ({len(result.claims)}):")
         for claim in result.claims:
-            print(f"    â€¢ {claim.subject} â†’ {claim.target}")
+            print(f"    \u2022 {claim.subject} \u2192 {claim.target}")
     if result.proof_records:
         print(f"\n  Proof Mode Results:")
         for proof in result.proof_records:
-            print(f"    â€¢ [{proof.status.value}] {proof.reason}")
+            print(f"    \u2022 [{proof.status.value}] {proof.reason}")
 
-    # Step 6: Investigation â€” Path from handle_request to save_order
+    # Step 6: Investigation \u2014 Path from handle_request to save_order
     print("\n" + "=" * 70)
     print("  INVESTIGATION: Path from handle_request to save_order")
     print("=" * 70)
@@ -94,22 +110,30 @@ def run_direct_demo():
         for i, ep in enumerate(result2.evidence_paths):
             print(f"    Path {i+1}:")
             for j, detail in enumerate(ep.node_details):
-                prefix = "    â†’ " if j > 0 else "      "
+                prefix = "    \u2192 " if j > 0 else "      "
                 print(f"      {prefix}{detail.get('name', '?')} ({detail.get('file', '?')}:{detail.get('line', '?')})")
     if result2.proof_records:
         print(f"\n  Proof Mode Results:")
         for proof in result2.proof_records:
-            print(f"    â€¢ [{proof.status.value}] {proof.reason}")
+            print(f"    \u2022 [{proof.status.value}] {proof.reason}")
 
-    # Step 7: Investigation â€” Impact of changes to get_unit_price
+    # Step 7: Investigation \u2014 Impact of changes to get_unit_price
     print("\n" + "=" * 70)
     print("  INVESTIGATION: Impact of changes to get_unit_price")
     print("=" * 70)
     result3 = investigate(repo_id, "what is the impact of changing get_unit_price?", gs)
     print(f"\n  Intent: {result3.intent}")
     print(f"  Answer: {result3.answer}")
+    if result3.claims:
+        print(f"\n  Claims ({len(result3.claims)}):")
+        for claim in result3.claims:
+            print(f"    \u2022 {claim.subject} \u2192 {claim.target}")
+    if result3.proof_records:
+        print(f"\n  Proof Mode Results:")
+        for proof in result3.proof_records:
+            print(f"    \u2022 [{proof.status.value}] {proof.reason}")
 
-    # Step 8: Proof Mode â€” Verify a valid claim
+    # Step 8: Proof Mode \u2014 Verify a valid claim
     print("\n" + "=" * 70)
     print("  PROOF MODE: Verify process_order CALLS compute_total (SHOULD BE SUPPORTED)")
     print("=" * 70)
@@ -129,7 +153,7 @@ def run_direct_demo():
         print(f"  Reason: {proof_valid.reason}")
         print(f"  Evidence: {proof_valid.evidence_inspected}")
 
-    # Step 9: Proof Mode â€” Verify an UNSUPPORTED claim
+    # Step 9: Proof Mode \u2014 Verify an UNSUPPORTED claim
     print("\n" + "=" * 70)
     print("  PROOF MODE: Verify format_currency CALLS save_order (SHOULD BE UNSUPPORTED)")
     print("=" * 70)
@@ -148,7 +172,7 @@ def run_direct_demo():
         print(f"\n  Status: {proof_invalid.status.value}")
         print(f"  Reason: {proof_invalid.reason}")
 
-    # Step 10: Proof Mode â€” Verify an INCONCLUSIVE claim (nonexistent function)
+    # Step 10: Proof Mode \u2014 Verify an INCONCLUSIVE claim (nonexistent function)
     print("\n" + "=" * 70)
     print("  PROOF MODE: Verify nonexistent_func CALLS save_order (SHOULD BE INCONCLUSIVE)")
     print("=" * 70)
@@ -169,14 +193,14 @@ def run_direct_demo():
     print("  DEMO COMPLETE")
     print("=" * 70)
     print("\n  What the graph verifies:")
-    print("    â€¢ Direct function call relationships found by static analysis")
-    print("    â€¢ Multi-hop dependency paths through the call graph")
-    print("    â€¢ Presence or absence of specific call edges")
+    print("    \u2022 Direct function call relationships found by static analysis")
+    print("    \u2022 Multi-hop dependency paths through the call graph")
+    print("    \u2022 Presence or absence of specific call edges")
     print("\n  What the graph CANNOT prove:")
-    print("    â€¢ Runtime behavior (dynamic dispatch, monkey-patching)")
-    print("    â€¢ That a code change WILL cause a failure")
-    print("    â€¢ Relationships involving unresolved calls or dynamic imports")
-    print("    â€¢ Completeness â€” unindexed code may contain additional relationships")
+    print("    \u2022 Runtime behavior (dynamic dispatch, monkey-patching)")
+    print("    \u2022 That a code change WILL cause a failure")
+    print("    \u2022 Relationships involving unresolved calls or dynamic imports")
+    print("    \u2022 Completeness \u2014 unindexed code may contain additional relationships")
 
     gs.close()
 
@@ -187,7 +211,7 @@ def run_api_demo():
 
     base = "http://localhost:8000"
     print("=" * 70)
-    print("  PATHWISE â€” API Demo")
+    print("  PATHWISE \u2014 API Demo")
     print("=" * 70)
 
     # Health check
@@ -216,7 +240,7 @@ def run_api_demo():
     r = httpx.get(f"{base}/api/repositories/{repo_id}/functions")
     funcs = r.json()
     for f in funcs:
-        print(f"    â€¢ {f['qualified_name']} ({f['file_path']}:{f['start_line']})")
+        print(f"    \u2022 {f['qualified_name']} ({f['file_path']}:{f['start_line']})")
 
     # Investigate
     print(f"\n[4] Investigating: 'Who calls compute_total?'")
@@ -251,4 +275,3 @@ if __name__ == "__main__":
         run_api_demo()
     else:
         run_direct_demo()
-
