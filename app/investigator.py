@@ -31,8 +31,8 @@ INTENT_PATTERNS = [
     (r"what\s+does\s+(.+?)\s+call", "find_callees"),
     (r"(?:callees?\s+of|functions?\s+called\s+by)\s+(.+)", "find_callees"),
     # "impact/affected by change to X"
-    (r"(?:impact|affected|dependencies|depends)\s+.*?(?:of|by|on|to)\s+(.+)", "find_impact"),
     (r"what\s+(?:is|would\s+be)\s+(?:the\s+)?(?:impact|effect)\s+.*?(?:changing|modifying)\s+(.+)", "find_impact"),
+    (r"(?:impact|affected|dependencies|depends)\s+.*?(?:of|by|on|to)\s+(.+)", "find_impact"),
     # "path/chain/connection from X to Y"
     (r"(?:path|chain|route|connection)\s+(?:from|between)\s+(.+?)\s+(?:to|and)\s+(.+)", "find_path"),
     (r"(?:does|can|is)\s+(.+?)\s+(?:call|reach|connect\s+to|lead\s+to)\s+(.+)", "find_path"),
@@ -73,7 +73,7 @@ def _clean_function_ref(ref: str) -> str:
     """Clean a function reference extracted from a question."""
     ref = ref.strip().strip("'\"` ")
     # Remove common prefixes
-    for prefix in ["function ", "method ", "the ", "a "]:
+    for prefix in ["function ", "method ", "the ", "a ", "changing ", "modifying "]:
         if ref.lower().startswith(prefix):
             ref = ref[len(prefix):]
     return ref.strip()

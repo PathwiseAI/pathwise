@@ -1,14 +1,16 @@
-"""API endpoint tests using FastAPI TestClient.
-
-Tests that require FalkorDB are marked with @skip_if_no_db.
-"""
-
 import os
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app, get_graph_store
 from app.graph_store import GraphStore
+
+
+def _sample_repo_path() -> str:
+    """Resolve the sample_repo path with canonical case."""
+    return str(Path(__file__).resolve().parent.parent.parent / "sample_repo")
 
 
 def _falkordb_available() -> bool:
@@ -44,9 +46,7 @@ class TestHealth:
 @skip_if_no_db
 class TestIndex:
     def test_index_sample_repo(self):
-        sample_path = os.path.abspath(
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), "sample_repo")
-        )
+        sample_path = _sample_repo_path()
         response = client.post(
             "/api/repositories/index",
             json={"path": sample_path},
@@ -79,9 +79,7 @@ class TestIndex:
 class TestFunctions:
     def test_list_functions(self):
         # First index
-        sample_path = os.path.abspath(
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), "sample_repo")
-        )
+        sample_path = _sample_repo_path()
         idx_resp = client.post(
             "/api/repositories/index",
             json={"path": sample_path},
@@ -105,9 +103,7 @@ class TestFunctions:
 @skip_if_no_db
 class TestInvestigate:
     def _get_repo_id(self) -> str:
-        sample_path = os.path.abspath(
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), "sample_repo")
-        )
+        sample_path = _sample_repo_path()
         resp = client.post("/api/repositories/index", json={"path": sample_path})
         return resp.json()["repository_id"]
 
@@ -143,9 +139,7 @@ class TestInvestigate:
 @skip_if_no_db
 class TestVerify:
     def _get_repo_id(self) -> str:
-        sample_path = os.path.abspath(
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), "sample_repo")
-        )
+        sample_path = _sample_repo_path()
         resp = client.post("/api/repositories/index", json={"path": sample_path})
         return resp.json()["repository_id"]
 
