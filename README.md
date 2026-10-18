@@ -335,6 +335,8 @@ python -m pytest -v
 
 > 📹 **Demo video:** [Watch 3-minute Demo](https://youtu.be/uydXysupKpo)
 
+> 🌐 **Deployment** Local FalkorDB instance via Docker
+
 The demo script (`scripts/demo.py`) demonstrates the complete workflow:
 1. Connect to FalkorDB
 2. Parse and index the sample repository
