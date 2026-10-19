@@ -102,6 +102,44 @@ Without FalkorDB, Pathwise cannot answer multi-hop dependency questions or verif
 
 Example: `a1b2c3d4e5f6::service.py::process_order`
 
+### Sample Call Graph (`sample_repo/`)
+Below is the dependency graph ingested into FalkorDB for the sample repository, showing cross-file call chains and isolated functions:
+```mermaid
+flowchart TD
+    subgraph api["sample_repo/api.py"]
+        handle_request["handle_request(...)"]
+        handle_status_request["handle_status_request(...)"]
+        validate_input["validate_input(...)"]
+    end
+    subgraph service["sample_repo/service.py"]
+        process_order["process_order(...)"]
+        get_order_status["get_order_status(...)"]
+    end
+    subgraph calculator["sample_repo/calculator.py"]
+        compute_total["compute_total(...)"]
+        apply_discount["apply_discount(...)"]
+        get_unit_price["get_unit_price(...)"]
+    end
+    subgraph persistence["sample_repo/persistence.py"]
+        save_order["save_order(...)"]
+        load_order["load_order(...)"]
+        generate_id["generate_id(...)"]
+    end
+    subgraph utils["sample_repo/utils.py (Isolated)"]
+        format_currency["format_currency(...)"]
+        sanitize_string["sanitize_string(...)"]
+    end
+    handle_request -->|CALLS| validate_input
+    handle_request -->|CALLS| process_order
+    handle_status_request -->|CALLS| get_order_status
+    process_order -->|CALLS| compute_total
+    process_order -->|CALLS| apply_discount
+    process_order -->|CALLS| save_order
+    compute_total -->|CALLS| get_unit_price
+    save_order -->|CALLS| generate_id
+    get_order_status -->|CALLS| load_order
+```
+
 ---
 
 ## Cypher Queries
