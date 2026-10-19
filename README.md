@@ -373,6 +373,8 @@ python -m pytest -v
 
 > 📹 **Demo video:** [Watch 3-minute Demo](https://youtu.be/uydXysupKpo)
 
+> 🕸️ **FalkorDB Visual Graph Walkthrough:** [Watch Visual Graph Demo](https://youtu.be/ib61_Z_SgFI)
+
 > 🌐 **Deployment** Local FalkorDB instance via Docker
 
 The demo script (`scripts/demo.py`) demonstrates the complete workflow:
